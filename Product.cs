@@ -1,76 +1,91 @@
 using System;
 
-class Product
+namespace DamageSystemDemo
 {
-    private string _name;
-    private decimal _price;
-    private int _quantity;
-
-    public Product(string name, decimal price, int quantity)
+    public interface IDamageable
     {
-        SetName(name);
-        SetPrice(price);
-        _quantity = quantity < 0 ? 0 : quantity;
+        void TakeDamage(int amount);
     }
 
-    public string Name
+    public abstract class Projectile
     {
-        get => _name;
-        set => SetName(value);
-    }
+        protected int damage;
 
-    public decimal Price
-    {
-        get => _price;
-        set => SetPrice(value);
-    }
-
-    public int Quantity => _quantity;
-
-    public decimal TotalValue => _price * _quantity;
-
-    private void SetName(string value)
-    {
-        if (!string.IsNullOrWhiteSpace(value))
-            _name = value;
-        else
-            Console.WriteLine("Помилка: назва товару не може бути порожньою!");
-    }
-
-    private void SetPrice(decimal value)
-    {
-        if (value >= 0)
-            _price = value;
-        else
-            Console.WriteLine("Помилка: ціна не може бути від'ємною!");
-    }
-
-    public void Restock(int amount)
-    {
-        if (amount > 0)
-            _quantity += amount;
-        else
-            Console.WriteLine("Помилка: кількість постачання повинна бути додатною!");
-    }
-
-    public void Sell(int amount)
-    {
-        if (amount <= 0)
+        public Projectile(int damage)
         {
-            Console.WriteLine("Помилка: кількість продажу повинна бути додатною!");
+            this.damage = damage;
         }
-        else if (amount > _quantity)
+
+        public abstract void HitTarget(IDamageable target);
+    }
+
+    public class Bullet : Projectile
+    {
+        public Bullet(int damage) : base(damage) { }
+
+        public override void HitTarget(IDamageable target)
         {
-            Console.WriteLine("Недостатньо товару на складі!");
-        }
-        else
-        {
-            _quantity -= amount;
+            Console.WriteLine($"Куля влучила у ціль, завдає {damage} шкоди.");
+            target.TakeDamage(damage);
         }
     }
 
-    public string GetInfo()
+    public class Enemy : IDamageable
     {
-        return $"Товар: {_name}, Ціна: {_price} грн, Кількість: {_quantity}, Загальна вартість: {TotalValue} грн";
+        private int health;
+
+        public Enemy(int health)
+        {
+            this.health = health;
+        }
+
+        public void TakeDamage(int amount)
+        {
+            health -= amount;
+            Console.WriteLine($"Ворог отримав {amount} шкоди. Здоров'я: {health}");
+
+            if (health <= 0)
+            {
+                Console.WriteLine("Ворог знищений!");
+            }
+        }
+    }
+
+    public class BreakableWall : IDamageable
+    {
+        private int durability;
+
+        public BreakableWall(int durability)
+        {
+            this.durability = durability;
+        }
+
+        public void TakeDamage(int amount)
+        {
+            durability -= amount;
+            Console.WriteLine($"Стіна отримала {amount} шкоди. Міцність: {durability}");
+
+            if (durability <= 0)
+            {
+                Console.WriteLine("Стіна зруйнована!");
+            }
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Bullet bullet = new Bullet(30);
+
+            Enemy enemy = new Enemy(50);
+            BreakableWall wall = new BreakableWall(40);
+
+            Console.WriteLine("=== Атака по ворогу ===");
+            bullet.HitTarget(enemy);
+
+            Console.WriteLine("\n=== Атака по стіні ===");
+            bullet.HitTarget(wall);
+        }
     }
 }
